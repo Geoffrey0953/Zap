@@ -1,0 +1,91 @@
+.help-page { min-height: calc(100vh - var(--nav-height)); padding: 24px 16px 48px; }
+.help-container { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.help-header h1 { font-size: 24px; font-weight: 800; color: var(--text-primary); }
+.help-header p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+.help-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.help-quick-card {
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 16px 8px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); text-decoration: none; transition: all 0.15s; font-size: 13px;
+  font-weight: 500; color: var(--text-secondary);
+}
+.help-quick-card span:first-child { font-size: 22px; }
+.help-quick-card:hover { border-color: var(--border-active); color: var(--teal); transform: translateY(-2px); }
+
+/* FAQ */
+.faq-section { display: flex; flex-direction: column; gap: 12px; }
+.faq-section h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.faq-list { display: flex; flex-direction: column; gap: 8px; }
+
+.faq-item {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); overflow: hidden; transition: border-color 0.15s;
+}
+.faq-item.open { border-color: var(--border-active); }
+
+.faq-question {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  padding: 14px 16px; background: none; border: none; text-align: left; cursor: pointer;
+  font-family: var(--font-body); gap: 12px;
+}
+.faq-question span:first-child { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.faq-chevron { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+
+.faq-answer {
+  padding: 0 16px 14px; font-size: 13px; color: var(--text-secondary);
+  line-height: 1.6; border-top: 1px solid var(--border);
+  padding-top: 12px; animation: fadeDown 0.15s ease;
+}
+
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Report */
+.report-section { display: flex; flex-direction: column; gap: 12px; }
+.report-section h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+.report-form {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 14px;
+}
+
+.input-group { display: flex; flex-direction: column; gap: 5px; }
+.input-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.input-group input, .input-group textarea, .input-group select {
+  padding: 11px 14px; background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-primary); font-size: 14px;
+  font-family: var(--font-body); transition: border-color 0.15s;
+}
+
+.input-group input::placeholder, .input-group textarea::placeholder { color: var(--text-muted); }
+
+.input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+  border-color: var(--teal); outline: none; box-shadow: 0 0 0 3px var(--teal-glow);
+}
+
+.input-group select option { background: var(--bg-card); }
+.input-group textarea { resize: vertical; min-height: 100px; }
+
+.report-submit {
+  padding: 13px; border-radius: var(--radius-sm); background: var(--teal);
+  color: var(--bg-primary); font-size: 15px; font-weight: 700; border: none;
+  cursor: pointer; font-family: var(--font-body); transition: all 0.15s;
+}
+.report-submit:hover { background: var(--teal-dim); transform: translateY(-1px); box-shadow: var(--shadow-teal); }
+
+/* Success */
+.report-success {
+  background: var(--bg-card); border: 1px solid var(--border-active);
+  border-radius: var(--radius-lg); padding: 40px 24px; display: flex;
+  flex-direction: column; align-items: center; gap: 10px; text-align: center;
+}
+.report-success span { font-size: 36px; }
+.report-success h3 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.report-success p { font-size: 14px; color: var(--text-secondary); max-width: 300px; }
+.report-success button {
+  margin-top: 6px; padding: 9px 20px; border-radius: var(--radius-sm);
+  background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary);
+  font-size: 13px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s;
+}
+.report-success button:hover { color: var(--text-primary); border-color: var(--text-muted); }

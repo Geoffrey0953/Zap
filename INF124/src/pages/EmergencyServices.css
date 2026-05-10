@@ -1,0 +1,61 @@
+.emergency-page { min-height: calc(100vh - var(--nav-height)); padding: 24px 16px 48px; }
+.emergency-container { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+.emergency-header h1 { font-size: 24px; font-weight: 800; color: var(--text-primary); }
+.emergency-header p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+.emergency-911 {
+  display: flex; align-items: center; gap: 16px; padding: 20px;
+  background: linear-gradient(135deg, rgba(240,106,106,0.12), rgba(240,106,106,0.06));
+  border: 1px solid rgba(240,106,106,0.4); border-radius: var(--radius-lg);
+  text-decoration: none; transition: all 0.15s;
+}
+.emergency-911:hover { border-color: var(--red); background: linear-gradient(135deg, rgba(240,106,106,0.18), rgba(240,106,106,0.1)); }
+
+.e911-icon { font-size: 32px; flex-shrink: 0; }
+
+.emergency-911 strong { display: block; font-size: 16px; font-weight: 800; color: var(--red); }
+.emergency-911 p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+.e911-num {
+  margin-left: auto; font-size: 28px; font-weight: 900; color: var(--red);
+  font-family: var(--font-display); flex-shrink: 0;
+}
+
+.emergency-section { display: flex; flex-direction: column; gap: 10px; }
+.emergency-section h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+.contacts-list { display: flex; flex-direction: column; gap: 8px; }
+
+.contact-card {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+  text-decoration: none; transition: all 0.15s;
+}
+.contact-card:hover { border-color: var(--border-active); background: var(--bg-elevated); transform: translateX(3px); }
+.contact-card svg { color: var(--text-muted); flex-shrink: 0; }
+
+.contact-icon { font-size: 22px; flex-shrink: 0; }
+.contact-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.contact-label { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.contact-number { font-size: 13px; color: var(--teal); font-weight: 500; font-family: var(--font-display); }
+
+.resources-list { display: flex; flex-direction: column; gap: 8px; }
+
+.resource-card {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+}
+
+.resource-icon { font-size: 22px; flex-shrink: 0; }
+.resource-info { display: flex; flex-direction: column; gap: 3px; }
+.resource-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.resource-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+
+.emergency-note {
+  display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+  border-left: 3px solid var(--blue);
+}
+.emergency-note span { font-size: 18px; flex-shrink: 0; }
+.emergency-note p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
