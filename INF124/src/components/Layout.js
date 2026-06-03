@@ -7,7 +7,6 @@ const NAV_LINKS = [
   { to: '/', label: 'Home', icon: '⌂' },
   { to: '/map', label: 'Map', icon: '◎' },
   { to: '/directory', label: 'Directory', icon: '⊞' },
-  { to: '/shuttle', label: 'Shuttle', icon: '⬡' },
   { to: '/help', label: 'Help', icon: '?' },
 ];
 

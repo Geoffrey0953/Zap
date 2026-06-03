@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { TRENDING, QUICK_FILTERS, ALERTS } from '../data/mockData';
+import { useBuildings } from '../hooks/useBuildings';
+import { apiFetch } from '../api/client';
 import SearchBar from '../components/SearchBar';
 import './Home.css';
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState(null);
+  const { buildings } = useBuildings();
+  const [alerts, setAlerts] = useState([]);
 
-  const activeAlerts = ALERTS.filter(a => a.active);
+  useEffect(() => {
+    apiFetch('/alerts?active=true')
+      .then(data => setAlerts(data.data || []))
+      .catch(() => {});
+  }, []);
+
+  const activeAlerts = alerts.filter(a => a.active);
+
+  // Pick diverse categories for trending display
+  const trending = buildings.slice(0, 6);
 
   return (
     <div className="home">
@@ -27,8 +38,8 @@ export default function Home() {
             {QUICK_FILTERS.map(f => (
               <button
                 key={f}
-                className={`filter-chip ${activeFilter === f ? 'active' : ''}`}
-                onClick={() => setActiveFilter(activeFilter === f ? null : f)}
+                className="filter-chip"
+                onClick={() => navigate(`/directory/buildings?category=${encodeURIComponent(f)}`)}
               >
                 {f}
               </button>
@@ -42,7 +53,7 @@ export default function Home() {
         <section className="alerts-banner">
           <div className="alert-scroll">
             {activeAlerts.map(alert => (
-              <div key={alert.id} className={`alert-chip alert-${alert.type}`}>
+              <div key={alert._id || alert.id} className={`alert-chip alert-${alert.type}`}>
                 <span className="alert-dot" />
                 <span>{alert.title}</span>
               </div>
@@ -54,14 +65,14 @@ export default function Home() {
       {/* Main content */}
       <div className="home-body">
 
-        {/* Trending Nearby */}
+        {/* Nearby Places */}
         <section className="home-section">
           <div className="section-header">
-            <h2 className="section-title">Trending nearby</h2>
-            <Link to="/directory" className="section-link">See all →</Link>
+            <h2 className="section-title">Campus Places</h2>
+            <Link to="/directory/buildings" className="section-link">See all →</Link>
           </div>
           <div className="trending-list">
-            {TRENDING.map(place => (
+            {trending.map(place => (
               <button
                 key={place.id}
                 className="trending-card"
@@ -72,12 +83,10 @@ export default function Home() {
                 </div>
                 <div className="trending-info">
                   <span className="trending-name">{place.name}</span>
-                  <span className="trending-sub">{place.subtext} · {place.distance}</span>
+                  <span className="trending-sub">{place.category} · {place.abbr}</span>
                 </div>
                 <div className="trending-right">
-                  <span className={`status-dot ${place.status === 'Open' ? 'open' : 'closing'}`} />
-                  <span className="trending-status">{place.status}</span>
-                  <span className="trending-rating">★ {place.rating}</span>
+                  <span className="trending-arrow">›</span>
                 </div>
               </button>
             ))}
@@ -124,10 +133,10 @@ function categoryEmoji(cat) {
   return map[cat] || '📍';
 }
 
+const QUICK_FILTERS = ['Food', 'Study spots', 'Academic', 'Recreation'];
+
 const QUICK_ACCESS = [
   { label: 'Map', icon: '◎', to: '/map' },
-  { label: 'Shuttle', icon: '⬡', to: '/shuttle' },
-  { label: 'Parking', icon: '🅿', to: '/parking' },
   { label: 'Directions', icon: '➜', to: '/directions' },
   { label: 'Buildings', icon: '🏛', to: '/directory/buildings' },
   { label: 'Departments', icon: '📚', to: '/directory/departments' },

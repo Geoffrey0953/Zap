@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ALERTS } from '../data/mockData';
+import { apiFetch } from '../api/client';
+import { getToken } from '../context/AuthContext';
 import './DispatchAlerts.css';
 
 const ALERT_TYPES = ['info', 'warning', 'success'];
@@ -8,26 +9,75 @@ const ALERT_TYPES = ['info', 'warning', 'success'];
 export default function DispatchAlerts() {
   const [form, setForm] = useState({ title: '', message: '', type: 'info' });
   const [dispatched, setDispatched] = useState(false);
-  const [activeAlerts, setActiveAlerts] = useState(ALERTS);
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDispatch = (e) => {
+  const token = getToken();
+
+  const fetchAlerts = useCallback(async () => {
+    try {
+      const data = await apiFetch('/alerts', { token });
+      setAlerts(data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch alerts:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchAlerts();
+  }, [fetchAlerts]);
+
+  const handleDispatch = async (e) => {
     e.preventDefault();
-    const newAlert = {
-      id: Date.now().toString(),
-      type: form.type,
-      title: form.title,
-      message: form.message,
-      time: 'Just now',
-      active: true,
-    };
-    setActiveAlerts(prev => [newAlert, ...prev]);
-    setDispatched(true);
-    setTimeout(() => { setDispatched(false); setForm({ title: '', message: '', type: 'info' }); }, 2000);
+    try {
+      await apiFetch('/alerts', {
+        method: 'POST',
+        body: { title: form.title, message: form.message, type: form.type, active: true },
+        token,
+      });
+      setDispatched(true);
+      setForm({ title: '', message: '', type: 'info' });
+      fetchAlerts();
+      setTimeout(() => setDispatched(false), 2000);
+    } catch (err) {
+      alert('Failed to dispatch alert: ' + err.message);
+    }
   };
 
-  const toggleAlert = (id) => {
-    setActiveAlerts(prev => prev.map(a => a.id === id ? { ...a, active: !a.active } : a));
+  const toggleAlert = async (alert) => {
+    try {
+      await apiFetch(`/alerts/${alert._id}`, {
+        method: 'PUT',
+        body: { active: !alert.active },
+        token,
+      });
+      fetchAlerts();
+    } catch (err) {
+      alert('Failed to update alert: ' + err.message);
+    }
   };
+
+  const deleteAlert = async (alert) => {
+    if (!window.confirm('Delete this alert?')) return;
+    try {
+      await apiFetch(`/alerts/${alert._id}`, { method: 'DELETE', token });
+      fetchAlerts();
+    } catch (err) {
+      alert('Failed to delete alert: ' + err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="dispatch-page">
+        <div className="dispatch-container">
+          <p>Loading alerts…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dispatch-page">
@@ -86,23 +136,29 @@ export default function DispatchAlerts() {
 
         {/* Current alerts */}
         <div className="current-alerts-section">
-          <h2>Current Alerts ({activeAlerts.filter(a => a.active).length} active)</h2>
+          <h2>Current Alerts ({alerts.filter(a => a.active).length} active)</h2>
           <div className="alerts-manage-list">
-            {activeAlerts.map(alert => (
-              <div key={alert.id} className={`alert-manage-row ${!alert.active ? 'inactive' : ''}`}>
+            {alerts.map(alert => (
+              <div key={alert._id} className={`alert-manage-row ${!alert.active ? 'inactive' : ''}`}>
                 <div className={`alert-manage-dot dot-${alert.type}`} />
                 <div className="alert-manage-body">
                   <div className="alert-manage-top">
                     <span className="alert-manage-title">{alert.title}</span>
-                    <span className="alert-manage-time">{alert.time}</span>
+                    <span className="alert-manage-time">{alert.createdAt ? new Date(alert.createdAt).toLocaleDateString() : ''}</span>
                   </div>
                   <p className="alert-manage-msg">{alert.message}</p>
                 </div>
                 <button
                   className={`toggle-btn ${alert.active ? 'deactivate' : 'activate'}`}
-                  onClick={() => toggleAlert(alert.id)}
+                  onClick={() => toggleAlert(alert)}
                 >
                   {alert.active ? 'Deactivate' : 'Activate'}
+                </button>
+                <button
+                  className="toggle-btn delete-btn"
+                  onClick={() => deleteAlert(alert)}
+                >
+                  🗑
                 </button>
               </div>
             ))}

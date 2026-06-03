@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ALERTS } from '../data/mockData';
+import { apiFetch } from '../api/client';
 import './Dashboard.css';
-
-const RECENT_REVIEWS = [
-  { place: 'Anteatery', rating: 4, text: 'Great food, crowded at lunch.' },
-  { place: 'Science Library', rating: 5, text: 'Best study spot on campus!' },
-];
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    apiFetch('/alerts')
+      .then(data => setAlerts(data.data || []))
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -45,18 +47,13 @@ export default function Dashboard() {
           {/* Stats */}
           <div className="profile-stats">
             <div className="stat-item">
-              <span className="stat-number">12</span>
-              <span className="stat-label">Reviews</span>
-            </div>
-            <div className="stat-divider" />
-            <div className="stat-item">
-              <span className="stat-number">8</span>
+              <span className="stat-number">—</span>
               <span className="stat-label">Saved</span>
             </div>
             <div className="stat-divider" />
             <div className="stat-item">
-              <span className="stat-number">3</span>
-              <span className="stat-label">Added</span>
+              <span className="stat-number">—</span>
+              <span className="stat-label">Visited</span>
             </div>
           </div>
         </div>
@@ -78,44 +75,23 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Reviews */}
-        <div className="dash-section">
-          <div className="dash-section-header">
-            <h2 className="dash-section-title">Recent Reviews</h2>
-          </div>
-          <div className="reviews-list">
-            {RECENT_REVIEWS.map((r, i) => (
-              <div key={i} className="review-card">
-                <div className="review-top">
-                  <span className="review-place">{r.place}</span>
-                  <div className="review-stars">
-                    {[1,2,3,4,5].map(s => (
-                      <span key={s} className={`star ${s <= r.rating ? 'filled' : ''}`}>★</span>
-                    ))}
+        {/* Alerts */}
+        {alerts.length > 0 && (
+          <div className="dash-section">
+            <h2 className="dash-section-title">Campus Alerts</h2>
+            <div className="alerts-list">
+              {alerts.map(alert => (
+                <div key={alert._id} className={`alert-row alert-${alert.type}`}>
+                  <div className="alert-indicator" />
+                  <div className="alert-body">
+                    <span className="alert-title">{alert.title}</span>
+                    <span className="alert-msg">{alert.message}</span>
                   </div>
                 </div>
-                <p className="review-text">{r.text}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Alerts */}
-        <div className="dash-section">
-          <h2 className="dash-section-title">Campus Alerts</h2>
-          <div className="alerts-list">
-            {ALERTS.map(alert => (
-              <div key={alert.id} className={`alert-row alert-${alert.type}`}>
-                <div className="alert-indicator" />
-                <div className="alert-body">
-                  <span className="alert-title">{alert.title}</span>
-                  <span className="alert-msg">{alert.message}</span>
-                  <span className="alert-time">{alert.time}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Admin shortcut */}
         {user?.role === 'admin' && (

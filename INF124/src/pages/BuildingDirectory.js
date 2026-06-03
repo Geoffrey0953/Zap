@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BUILDINGS, CATEGORIES } from '../data/mockData';
+import { CATEGORIES } from '../data/constants';
+import { useBuildings } from '../hooks/useBuildings';
 import './BuildingDirectory.css';
 
 const categoryColors = {
@@ -17,10 +18,18 @@ function categoryEmoji(cat) {
 export default function BuildingDirectory() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('name');
+  const { buildings, loading, error } = useBuildings();
   const navigate = useNavigate();
 
-  const filtered = BUILDINGS
+  if (loading) {
+    return <div className="bdir-page"><p className="bdir-count">Loading buildings…</p></div>;
+  }
+
+  if (error) {
+    return <div className="bdir-page"><p className="bdir-count">Error: {error}</p></div>;
+  }
+
+  const filtered = buildings
     .filter(b => {
       const matchCat = activeCategory === 'All' || b.category === activeCategory;
       const matchSearch = b.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -38,7 +47,7 @@ export default function BuildingDirectory() {
         <div className="bdir-header">
           <Link to="/directory" className="back-link">← Directory</Link>
           <h1>Building Directory</h1>
-          <p>{BUILDINGS.length} locations on campus</p>
+          <p>{buildings.length} locations on campus</p>
         </div>
 
         {/* Search */}

@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
-import { BUILDINGS, CATEGORIES, UCI_CENTER } from '../data/mockData';
+import { CATEGORIES, UCI_CENTER } from '../data/constants';
+import { useBuildings } from '../hooks/useBuildings';
 import './MapPage.css';
 
 // Fix default marker icons
@@ -53,9 +54,18 @@ export default function MapPage() {
   const [search, setSearch] = useState('');
   const [flyTo, setFlyTo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { buildings, loading, error } = useBuildings();
   const navigate = useNavigate();
 
-  const filtered = BUILDINGS.filter(b => {
+  if (loading) {
+    return <div className="map-page"><p style={{ padding: '2rem' }}>Loading buildings…</p></div>;
+  }
+
+  if (error) {
+    return <div className="map-page"><p style={{ padding: '2rem' }}>Error: {error}</p></div>;
+  }
+
+  const filtered = buildings.filter(b => {
     const matchesCat = activeCategory === 'All' || b.category === activeCategory;
     const matchesSearch = b.name.toLowerCase().includes(search.toLowerCase()) ||
       b.abbr.toLowerCase().includes(search.toLowerCase());
@@ -209,7 +219,10 @@ export default function MapPage() {
                 </button>
                 <button
                   className="panel-btn-ghost"
-                  onClick={() => navigate(`/directions?to=${selectedBuilding.id}`)}
+                  onClick={() => {
+                    const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedBuilding.lat},${selectedBuilding.lng}&destination_place_id=${encodeURIComponent(selectedBuilding.name)}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
                 >
                   Directions
                 </button>

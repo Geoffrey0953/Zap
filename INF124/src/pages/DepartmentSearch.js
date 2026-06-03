@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { DEPARTMENTS } from '../data/mockData';
+import { DEPARTMENTS } from '../data/departments';
 import './DepartmentSearch.css';
 
 const SCHOOLS = ['All', ...Array.from(new Set(DEPARTMENTS.map(d => d.school)))];

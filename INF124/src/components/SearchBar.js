@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BUILDINGS, DEPARTMENTS } from '../data/mockData';
+import { useBuildings } from '../hooks/useBuildings';
+import { DEPARTMENTS } from '../data/departments';
 import './SearchBar.css';
 
 export default function SearchBar({ placeholder = 'Search places, buildings, food...', autoFocus = false }) {
@@ -9,15 +10,16 @@ export default function SearchBar({ placeholder = 'Search places, buildings, foo
   const [focused, setFocused] = useState(false);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const { buildings } = useBuildings();
 
   useEffect(() => {
     if (autoFocus && inputRef.current) inputRef.current.focus();
   }, [autoFocus]);
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return; }
+    if (!query.trim() || buildings.length === 0) { setResults([]); return; }
     const q = query.toLowerCase();
-    const buildings = BUILDINGS
+    const bldgs = buildings
       .filter(b => b.name.toLowerCase().includes(q) || b.abbr.toLowerCase().includes(q) || b.category.toLowerCase().includes(q))
       .slice(0, 4)
       .map(b => ({ ...b, type: 'building' }));
@@ -25,8 +27,8 @@ export default function SearchBar({ placeholder = 'Search places, buildings, foo
       .filter(d => d.name.toLowerCase().includes(q))
       .slice(0, 2)
       .map(d => ({ ...d, type: 'department' }));
-    setResults([...buildings, ...depts]);
-  }, [query]);
+    setResults([...bldgs, ...depts]);
+  }, [query, buildings]);
 
   const handleSelect = (item) => {
     if (item.type === 'building') navigate(`/directory/buildings/${item.id}`);

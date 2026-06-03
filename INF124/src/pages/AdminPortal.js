@@ -1,17 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { BUILDINGS, ALERTS } from '../data/mockData';
+import { apiFetch } from '../api/client';
+import { getToken } from '../context/AuthContext';
+import { useBuildings } from '../hooks/useBuildings';
 import './AdminPortal.css';
 
 export default function AdminPortal() {
   const { user } = useAuth();
+  const { buildings } = useBuildings();
+  const [alertCount, setAlertCount] = useState(0);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const token = getToken();
+        const data = await apiFetch('/alerts', { token });
+        const alerts = data.data || [];
+        setAlertCount(alerts.filter(a => a.active).length);
+      } catch {}
+    };
+    fetchAlerts();
+  }, []);
 
   const stats = [
-    { label: 'Buildings', value: BUILDINGS.length, icon: '🏛' },
-    { label: 'Active Alerts', value: ALERTS.filter(a => a.active).length, icon: '📢' },
-    { label: 'Users (mock)', value: 142, icon: '👥' },
-    { label: 'Reports', value: 7, icon: '📋' },
+    { label: 'Buildings', value: buildings.length, icon: '🏛' },
+    { label: 'Active Alerts', value: alertCount, icon: '📢' },
   ];
 
   return (
@@ -54,22 +68,6 @@ export default function AdminPortal() {
           </div>
         </div>
 
-        {/* Recent activity */}
-        <div className="admin-section">
-          <h2>Recent Reports</h2>
-          <div className="admin-reports">
-            {MOCK_REPORTS.map(r => (
-              <div key={r.id} className="report-row">
-                <div className="report-row-info">
-                  <span className="report-row-subject">{r.subject}</span>
-                  <span className="report-row-cat">{r.category}</span>
-                </div>
-                <span className={`report-row-status status-${r.status}`}>{r.status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
       </div>
     </div>
   );
@@ -78,11 +76,4 @@ export default function AdminPortal() {
 const ADMIN_LINKS = [
   { to: '/admin/buildings', label: 'Manage Building Data', sub: 'Add, edit, or remove buildings', icon: '🏛' },
   { to: '/admin/alerts', label: 'Dispatch Alerts', sub: 'Send campus-wide notifications', icon: '📢' },
-];
-
-const MOCK_REPORTS = [
-  { id: 1, subject: 'Incorrect hours for Mesa Court', category: 'Incorrect Information', status: 'open' },
-  { id: 2, subject: 'Missing building: Engineering Hall 2', category: 'Missing Location', status: 'reviewing' },
-  { id: 3, subject: 'Shuttle tracker not updating', category: 'Technical Issue', status: 'resolved' },
-  { id: 4, subject: 'ARC closes at 10pm on Sundays', category: 'Incorrect Information', status: 'resolved' },
 ];

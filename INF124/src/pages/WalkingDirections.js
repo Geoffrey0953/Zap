@@ -1,41 +1,73 @@
-import React, { useState } from 'react';
-import { BUILDINGS } from '../data/mockData';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useBuildings } from '../hooks/useBuildings';
 import './WalkingDirections.css';
 
-const MOCK_STEPS = [
-  { icon: '↑', text: 'Head north on Ring Road toward Aldrich Park', dist: '0.1 mi' },
-  { icon: '↰', text: 'Turn left onto the main walkway past the Student Center', dist: '0.2 mi' },
-  { icon: '↑', text: 'Continue straight through Aldrich Park', dist: '0.3 mi' },
-  { icon: '↱', text: 'Turn right toward Donald Bren Hall', dist: '0.1 mi' },
-  { icon: '📍', text: 'Arrive at your destination', dist: '' },
-];
-
 export default function WalkingDirections() {
+  const { buildings } = useBuildings();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [showResults, setShowResults] = useState(false);
   const [fromSuggestions, setFromSuggestions] = useState([]);
   const [toSuggestions, setToSuggestions] = useState([]);
 
-  const getSuggestions = (val) =>
-    BUILDINGS.filter(b => b.name.toLowerCase().includes(val.toLowerCase()) && val.length > 1).slice(0, 4);
+  const toBuilding = useMemo(
+    () => buildings.find(b => b.id === to || b.name.toLowerCase() === to.toLowerCase()),
+    [buildings, to]
+  );
+  const fromBuilding = useMemo(
+    () => buildings.find(b => b.id === from || b.name.toLowerCase() === from.toLowerCase()),
+    [buildings, from]
+  );
+
+  // Pre-fill from URL query params
+  useEffect(() => {
+    const toParam = searchParams.get('to');
+    const fromParam = searchParams.get('from');
+    if (toParam) {
+      const b = buildings.find(b => b.id === toParam);
+      setTo(b ? b.name : toParam);
+    }
+    if (fromParam) {
+      const b = buildings.find(b => b.id === fromParam);
+      setFrom(b ? b.name : fromParam);
+    }
+  }, [searchParams, buildings]);
+
+  const getSuggestions = (val) => {
+    if (!val || val.length < 2) return [];
+    return buildings
+      .filter(b => b.name.toLowerCase().includes(val.toLowerCase()))
+      .slice(0, 4);
+  };
 
   const handleFromChange = (e) => {
     setFrom(e.target.value);
     setFromSuggestions(getSuggestions(e.target.value));
-    setShowResults(false);
   };
 
   const handleToChange = (e) => {
     setTo(e.target.value);
     setToSuggestions(getSuggestions(e.target.value));
-    setShowResults(false);
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (from && to) setShowResults(true);
+    // Nothing to show until real routing data available
   };
+
+  const openInGoogleMaps = () => {
+    if (!toBuilding) return;
+    let url = `https://www.google.com/maps/dir/?api=1&destination=${toBuilding.lat},${toBuilding.lng}&destination_place_id=${encodeURIComponent(toBuilding.name)}`;
+    if (fromBuilding) {
+      url += `&origin=${fromBuilding.lat},${fromBuilding.lng}`;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const showResult = to;
 
   return (
     <div className="directions-page">
@@ -111,59 +143,64 @@ export default function WalkingDirections() {
         </form>
 
         {/* Results */}
-        {showResults && (
+        {showResult && (
           <div className="directions-results">
             <div className="directions-summary">
               <div className="summary-route">
-                <span className="route-from">{from}</span>
+                <span className="route-from">{from || 'Current location'}</span>
                 <span className="route-arrow">→</span>
                 <span className="route-to">{to}</span>
               </div>
-              <div className="summary-stats">
-                <div className="dir-stat">
-                  <span className="dir-stat-val">~0.7 mi</span>
-                  <span className="dir-stat-label">Distance</span>
-                </div>
-                <div className="dir-stat">
-                  <span className="dir-stat-val">~14 min</span>
-                  <span className="dir-stat-label">Walking</span>
-                </div>
-                <div className="dir-stat">
-                  <span className="dir-stat-val">~4 min</span>
-                  <span className="dir-stat-label">By bike</span>
-                </div>
-              </div>
-            </div>
 
-            <div className="steps-list">
-              <h3>Step-by-step</h3>
-              {MOCK_STEPS.map((step, i) => (
-                <div key={i} className="step-item">
-                  <div className="step-icon-wrap">
-                    <span className="step-icon">{step.icon}</span>
-                    {i < MOCK_STEPS.length - 1 && <div className="step-line" />}
+              {toBuilding ? (
+                <div className="result-card">
+                  <div className="result-row">
+                    <span className="result-label">From</span>
+                    <span className="result-value">
+                      {fromBuilding ? fromBuilding.name : 'Your location'}
+                    </span>
                   </div>
-                  <div className="step-body">
-                    <span className="step-text">{step.text}</span>
-                    {step.dist && <span className="step-dist">{step.dist}</span>}
+                  <div className="result-row">
+                    <span className="result-label">To</span>
+                    <span className="result-value">{toBuilding.name}</span>
+                  </div>
+                  <div className="result-actions">
+                    <button
+                      className="action-btn primary"
+                      onClick={openInGoogleMaps}
+                    >
+                      Open in Google Maps
+                    </button>
+                    <button
+                      className="action-btn ghost"
+                      onClick={() => navigate(`/map`)}
+                    >
+                      View on map
+                    </button>
                   </div>
                 </div>
-              ))}
+              ) : (
+                <div className="result-card">
+                  <p className="result-hint">
+                    Select a building from suggestions to get directions.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* Quick popular routes */}
-        {!showResults && (
+        {!showResult && (
           <div className="popular-routes">
             <h3>Popular routes</h3>
             <div className="popular-list">
               {POPULAR.map((r, i) => (
                 <button key={i} className="popular-item"
-                  onClick={() => { setFrom(r.from); setTo(r.to); setShowResults(true); }}>
+                  onClick={() => { setFrom(r.from); setTo(r.to); }}>
                   <div className="popular-route-info">
                     <span className="popular-label">{r.from} → {r.to}</span>
-                    <span className="popular-meta">{r.dist} · ~{r.time}</span>
+                    <span className="popular-meta">Tap to plan route</span>
                   </div>
                   <span className="popular-arrow">›</span>
                 </button>
@@ -178,8 +215,8 @@ export default function WalkingDirections() {
 }
 
 const POPULAR = [
-  { from: 'Mesa Court Dining', to: 'Donald Bren Hall', dist: '0.5 mi', time: '10 min' },
-  { from: 'Anteater Recreation Center', to: 'Langson Library', dist: '0.3 mi', time: '7 min' },
-  { from: 'Student Center', to: 'Rowland Hall', dist: '0.4 mi', time: '8 min' },
-  { from: 'Aldrich Park', to: 'Social Science Plaza A', dist: '0.2 mi', time: '4 min' },
+  { from: 'Mesa Court Dining', to: 'Donald Bren Hall' },
+  { from: 'Anteater Recreation Center', to: 'Langson Library' },
+  { from: 'Student Center', to: 'Rowland Hall' },
+  { from: 'Aldrich Park', to: 'Social Science Plaza A' },
 ];

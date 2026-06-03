@@ -17,8 +17,6 @@ import Dashboard from './pages/Dashboard';
 import SavedLocations from './pages/SavedLocations';
 import ClassSchedule from './pages/ClassSchedule';
 import WalkingDirections from './pages/WalkingDirections';
-import ShuttleTracker from './pages/ShuttleTracker';
-import ParkingAssistant from './pages/ParkingAssistant';
 import HelpCenter from './pages/HelpCenter';
 import EmergencyServices from './pages/EmergencyServices';
 import CampusDirectory from './pages/CampusDirectory';
@@ -46,8 +44,6 @@ function App() {
 
             {/* Transit & Navigation */}
             <Route path="/directions" element={<WalkingDirections />} />
-            <Route path="/shuttle" element={<ShuttleTracker />} />
-            <Route path="/parking" element={<ParkingAssistant />} />
 
             {/* Safety & Support */}
             <Route path="/help" element={<HelpCenter />} />

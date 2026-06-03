@@ -3,8 +3,7 @@ import './HelpCenter.css';
 
 const FAQS = [
   { q: 'How do I save a location?', a: 'Sign in to your account, navigate to any building detail page, and tap the "Save" button in the top right corner.' },
-  { q: 'How accurate is the shuttle tracker?', a: 'Shuttle locations are updated in real-time via UCI Transportation. Arrival times may vary slightly due to traffic conditions.' },
-  { q: 'Can I use ZAP without signing in?', a: 'Yes! You can browse the map, directory, and shuttle tracker as a guest. Sign in to access saved locations, class schedule, and personalized features.' },
+  { q: 'Can I use ZAP without signing in?', a: 'Yes! You can browse the map, directory, and campus places as a guest. Sign in to access saved locations, class schedule, and personalized features.' },
   { q: 'How do I report incorrect building information?', a: 'Use the "Report an Issue" form below and select "Incorrect Information" as the category. Our team reviews all submissions.' },
   { q: 'Is ZAP available as a mobile app?', a: 'ZAP is a Progressive Web App (PWA). On mobile, you can add it to your home screen for an app-like experience.' },
 ];
