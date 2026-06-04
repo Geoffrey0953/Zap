@@ -65,9 +65,10 @@ export const BUILDINGS = [
   // ── Dining ──
   { id: 'anteatery', name: 'The Anteatery', abbr: 'ANT', category: 'Dining', lat: 33.6510884, lng: -117.8449358, hours: 'Mon–Fri 7am–8pm, Sat–Sun 10am–4pm', description: "UCI's flagship all-you-can-eat dining hall with a wide variety of options.", departments: [], image: null },
   { id: 'phoenix', name: 'Phoenix Food Court', abbr: 'PHX', category: 'Dining', lat: 33.6456039, lng: -117.8407073, hours: 'Mon–Fri 7:30am–8pm, Sat–Sun 10am–4pm', description: 'Food court near the Engineering and ICS buildings with multiple dining options.', departments: [], image: null },
+  { id: 'brandywine', name: 'Brandywine Commons', abbr: 'BWC', category: 'Dining', lat: 33.6453928, lng: -117.8393075, hours: 'Mon–Fri 7am–8pm, Sat–Sun 9am–5pm', description: 'Brandywine Commons dining facility serving a variety of meals for students and staff.', departments: [], image: null },
  
   // ── Recreation ──
-  { id: 'arc', name: 'Anteater Recreation Center', abbr: 'ARC', category: 'Recreation', lat: 33.6453928, lng: -117.8393075, hours: 'Mon–Fri 6am–11pm, Sat–Sun 8am–9pm', description: 'State-of-the-art fitness and recreation facility for students, faculty, and staff.', departments: [], image: null },
+  { id: 'arc', name: 'Anteater Recreation Center', abbr: 'ARC', category: 'Recreation', lat: 33.6434101, lng: -117.8279401, hours: 'Mon–Fri 6am–11pm, Sat–Sun 8am–9pm', description: 'State-of-the-art fitness and recreation facility for students, faculty, and staff.', departments: [], image: null },
   { id: 'bren-events', name: 'Bren Events Center', abbr: 'BEC', category: 'Recreation', lat: 33.6493863, lng: -117.8470627, hours: 'Event hours vary', description: "UCI's main arena for concerts, graduation ceremonies, and athletic events.", departments: [], image: null },
   { id: 'iab', name: 'Intercollegiate Athletics Building', abbr: 'IAB', category: 'Recreation', lat: 33.6482032, lng: -117.8454751, hours: 'Mon–Fri 8am–5pm', description: 'Administrative and support building for UCI intercollegiate athletics programs.', departments: [], image: null },
  
@@ -144,3 +145,4 @@ export const ALERTS = [
 ];
  
 export const UCI_CENTER = [33.6461, -117.8426];
+ 

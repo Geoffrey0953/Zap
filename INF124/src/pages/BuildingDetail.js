@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { BUILDINGS } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
+import { toggleSavedLocation, isBuildingSaved } from '../utils/savedLocations';
 import './BuildingDetail.css';
-
+ 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
-
+ 
 const categoryColors = {
   Dining: '#f5c842', Study: '#5b9cf6', Academic: '#4ecda4',
   Recreation: '#f06a6a', Services: '#c084fc', Parking: '#fb923c',
   Outdoor: '#86efac', default: '#8b90a7',
 };
-
+ 
 const MOCK_REVIEWS = [
   { author: 'Anteater Zot', rating: 4, text: 'Great food but can get crowded at lunch.', time: '2d ago' },
   { author: 'Bob H.', rating: 5, text: 'Best spot on campus! Always clean and organized.', time: '1w ago' },
   { author: 'Sarah M.', rating: 3, text: 'Hours could be longer on weekends.', time: '2w ago' },
 ];
-
+ 
 export default function BuildingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,9 +35,15 @@ export default function BuildingDetail() {
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [hoveredStar, setHoveredStar] = useState(0);
-
+  const [saveFlash, setSaveFlash] = useState('');
+ 
   const building = BUILDINGS.find(b => b.id === id);
-
+ 
+  // Load saved state from localStorage on mount
+  useEffect(() => {
+    if (building) setSaved(isBuildingSaved(building.id));
+  }, [building]);
+ 
   if (!building) {
     return (
       <div className="bdetail-notfound">
@@ -45,30 +52,34 @@ export default function BuildingDetail() {
       </div>
     );
   }
-
+ 
   const color = categoryColors[building.category] || categoryColors.default;
-
+ 
   const handleSave = () => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    setSaved(s => !s);
+    const updated = toggleSavedLocation(building.id);
+    const nowSaved = updated.some(s => s.id === building.id);
+    setSaved(nowSaved);
+    setSaveFlash(nowSaved ? 'Saved!' : 'Removed');
+    setTimeout(() => setSaveFlash(''), 1500);
   };
-
+ 
   const handleReviewSubmit = (e) => {
     e.preventDefault();
-    alert(`Review submitted! (wire up with backend later)\n"${reviewText}" — ${reviewRating}★`);
+    alert(`Review submitted!\n"${reviewText}" — ${reviewRating}★`);
     setShowReviewForm(false);
     setReviewText('');
     setReviewRating(5);
   };
-
+ 
   return (
     <div className="bdetail-page">
-
+ 
       {/* Header bar */}
       <div className="bdetail-topbar">
         <button className="bdetail-back" onClick={() => navigate(-1)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <polyline points="15 18 9 12 15 6"/>
+            <polyline points="15 18 9 12 15 6" />
           </svg>
           Back
         </button>
@@ -77,13 +88,17 @@ export default function BuildingDetail() {
           onClick={handleSave}
           title={saved ? 'Remove from saved' : 'Save this place'}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? 'var(--teal)' : 'none'} stroke={saved ? 'var(--teal)' : 'currentColor'} strokeWidth="2">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+          <svg width="16" height="16" viewBox="0 0 24 24"
+            fill={saved ? 'var(--teal)' : 'none'}
+            stroke={saved ? 'var(--teal)' : 'currentColor'}
+            strokeWidth="2"
+          >
+            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
           </svg>
-          {saved ? 'Saved' : 'Save'}
+          {saveFlash || (saved ? 'Saved' : 'Save')}
         </button>
       </div>
-
+ 
       {/* Mini Map */}
       <div className="bdetail-map">
         <MapContainer
@@ -104,9 +119,9 @@ export default function BuildingDetail() {
           Open full map ↗
         </button>
       </div>
-
+ 
       <div className="bdetail-body">
-
+ 
         {/* Title section */}
         <div className="bdetail-title-section">
           <div className="bdetail-badges">
@@ -120,7 +135,7 @@ export default function BuildingDetail() {
           <h1 className="bdetail-name">{building.name}</h1>
           <p className="bdetail-abbr">{building.abbr} · UCI Campus</p>
         </div>
-
+ 
         {/* Info cards */}
         <div className="bdetail-info-grid">
           <div className="info-card">
@@ -138,13 +153,13 @@ export default function BuildingDetail() {
             </div>
           </div>
         </div>
-
+ 
         {/* Description */}
         <div className="bdetail-section">
           <h2>About</h2>
           <p className="bdetail-desc">{building.description}</p>
         </div>
-
+ 
         {/* Departments */}
         {building.departments.length > 0 && (
           <div className="bdetail-section">
@@ -159,52 +174,45 @@ export default function BuildingDetail() {
             </div>
           </div>
         )}
-
+ 
         {/* Action buttons */}
         <div className="bdetail-actions">
           <button
             className="action-btn primary"
-            onClick={() => navigate(`/directions?to=${building.id}`)}
+            onClick={() => navigate(`/map?to=${building.id}`)}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+              <polygon points="3 11 22 2 13 21 11 13 3 11" />
             </svg>
             Get Directions
           </button>
-          <button
-            className="action-btn ghost"
-            onClick={() => setShowReviewForm(v => !v)}
-          >
+          <button className="action-btn ghost" onClick={() => setShowReviewForm(v => !v)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
             </svg>
             Write Review
           </button>
         </div>
-
+ 
         {/* Review Form */}
         {showReviewForm && (
           <div className="review-form-card">
             <h3>Write a Review</h3>
             <p className="review-form-place">{building.name}</p>
-
             <div className="star-picker">
               <p>How was your experience?</p>
               <div className="stars-input">
-                {[1,2,3,4,5].map(s => (
+                {[1, 2, 3, 4, 5].map(s => (
                   <button
                     key={s}
                     className={`star-btn ${s <= (hoveredStar || reviewRating) ? 'filled' : ''}`}
                     onMouseEnter={() => setHoveredStar(s)}
                     onMouseLeave={() => setHoveredStar(0)}
                     onClick={() => setReviewRating(s)}
-                  >
-                    ★
-                  </button>
+                  >★</button>
                 ))}
               </div>
             </div>
-
             <form onSubmit={handleReviewSubmit} className="review-form">
               <textarea
                 value={reviewText}
@@ -220,7 +228,7 @@ export default function BuildingDetail() {
             </form>
           </div>
         )}
-
+ 
         {/* Reviews */}
         <div className="bdetail-section">
           <div className="reviews-header">
@@ -228,13 +236,12 @@ export default function BuildingDetail() {
             <div className="avg-rating">
               <span className="avg-number">4.2</span>
               <div className="avg-stars">
-                {[1,2,3,4,5].map(s => (
+                {[1, 2, 3, 4, 5].map(s => (
                   <span key={s} className={`star ${s <= 4 ? 'filled' : ''}`}>★</span>
                 ))}
               </div>
             </div>
           </div>
-
           <div className="reviews-list">
             {MOCK_REVIEWS.map((r, i) => (
               <div key={i} className="review-item">
@@ -244,7 +251,7 @@ export default function BuildingDetail() {
                     <span className="reviewer-name">{r.author}</span>
                     <div className="reviewer-meta">
                       <div className="r-stars">
-                        {[1,2,3,4,5].map(s => (
+                        {[1, 2, 3, 4, 5].map(s => (
                           <span key={s} className={`star ${s <= r.rating ? 'filled' : ''}`}>★</span>
                         ))}
                       </div>
@@ -257,7 +264,7 @@ export default function BuildingDetail() {
             ))}
           </div>
         </div>
-
+ 
       </div>
     </div>
   );
