@@ -1,7 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import { useBuildings } from '../hooks/useBuildings';
 import './WalkingDirections.css';
+
+function FitBounds({ bounds }) {
+  const map = useMap();
+  useEffect(() => {
+    if (bounds && bounds.length >= 2) {
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
+  }, [bounds, map]);
+  return null;
+}
 
 export default function WalkingDirections() {
   const { buildings } = useBuildings();
@@ -13,6 +24,11 @@ export default function WalkingDirections() {
   const [fromSuggestions, setFromSuggestions] = useState([]);
   const [toSuggestions, setToSuggestions] = useState([]);
 
+  const [route, setRoute] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const toBuilding = useMemo(
     () => buildings.find(b => b.id === to || b.name.toLowerCase() === to.toLowerCase()),
     [buildings, to]
@@ -22,7 +38,6 @@ export default function WalkingDirections() {
     [buildings, from]
   );
 
-  // Pre-fill from URL query params
   useEffect(() => {
     const toParam = searchParams.get('to');
     const fromParam = searchParams.get('from');
@@ -53,14 +68,46 @@ export default function WalkingDirections() {
     setToSuggestions(getSuggestions(e.target.value));
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    // Nothing to show until real routing data available
+    if (!fromBuilding || !toBuilding) {
+      setError('Please select both a starting building and a destination.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setRoute(null);
+    setSummary(null);
+
+    try {
+      const url = `https://router.project-osrm.org/route/v1/foot/${fromBuilding.lng},${fromBuilding.lat};${toBuilding.lng},${toBuilding.lat}?overview=full&geometries=geojson&steps=true`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Routing service returned ${res.status}`);
+      const data = await res.json();
+      if (data.code !== 'Ok' || !data.routes || !data.routes[0]) {
+        throw new Error('No walking route found between those locations.');
+      }
+      const r = data.routes[0];
+      const coords = r.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      const steps = (r.legs[0]?.steps || []).map((s) => {
+        const type = s.maneuver?.type || 'continue';
+        const name = s.name || 'unnamed path';
+        const meters = Math.round(s.distance || 0);
+        return `${type.charAt(0).toUpperCase() + type.slice(1)} on ${name} (${meters} m)`;
+      });
+      setRoute(coords);
+      setSummary({ distanceMeters: r.distance, durationSeconds: r.duration, steps });
+    } catch (err) {
+      setError(err.message || 'Failed to fetch directions.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openInGoogleMaps = () => {
     if (!toBuilding) return;
-    let url = `https://www.google.com/maps/dir/?api=1&destination=${toBuilding.lat},${toBuilding.lng}&destination_place_id=${encodeURIComponent(toBuilding.name)}`;
+    let url = `https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${toBuilding.lat},${toBuilding.lng}&destination_place_id=${encodeURIComponent(toBuilding.name)}`;
     if (fromBuilding) {
       url += `&origin=${fromBuilding.lat},${fromBuilding.lng}`;
     }
@@ -68,6 +115,8 @@ export default function WalkingDirections() {
   };
 
   const showResult = to;
+  const distanceMi = summary ? (summary.distanceMeters * 0.000621371).toFixed(2) : null;
+  const durationMin = summary ? Math.max(1, Math.round(summary.durationSeconds / 60)) : null;
 
   return (
     <div className="directions-page">
@@ -86,7 +135,7 @@ export default function WalkingDirections() {
               <div className="dir-input-inner">
                 <input
                   type="text"
-                  placeholder="From: Your location or building"
+                  placeholder="From: Starting building"
                   value={from}
                   onChange={handleFromChange}
                   onBlur={() => setTimeout(() => setFromSuggestions([]), 150)}
@@ -137,60 +186,75 @@ export default function WalkingDirections() {
             </div>
           </div>
 
-          <button type="submit" className="directions-go-btn" disabled={!from || !to}>
-            Get Directions
+          <button type="submit" className="directions-go-btn" disabled={!fromBuilding || !toBuilding || loading}>
+            {loading ? 'Finding route…' : 'Get Directions'}
           </button>
         </form>
 
-        {/* Results */}
-        {showResult && (
+        {error && (
+          <div className="directions-error">{error}</div>
+        )}
+
+        {showResult && route && summary && (
           <div className="directions-results">
             <div className="directions-summary">
               <div className="summary-route">
-                <span className="route-from">{from || 'Current location'}</span>
+                <span className="route-from">{fromBuilding?.name || from}</span>
                 <span className="route-arrow">→</span>
-                <span className="route-to">{to}</span>
+                <span className="route-to">{toBuilding?.name || to}</span>
               </div>
 
-              {toBuilding ? (
-                <div className="result-card">
-                  <div className="result-row">
-                    <span className="result-label">From</span>
-                    <span className="result-value">
-                      {fromBuilding ? fromBuilding.name : 'Your location'}
-                    </span>
-                  </div>
-                  <div className="result-row">
-                    <span className="result-label">To</span>
-                    <span className="result-value">{toBuilding.name}</span>
-                  </div>
-                  <div className="result-actions">
-                    <button
-                      className="action-btn primary"
-                      onClick={openInGoogleMaps}
-                    >
-                      Open in Google Maps
-                    </button>
-                    <button
-                      className="action-btn ghost"
-                      onClick={() => navigate(`/map`)}
-                    >
-                      View on map
-                    </button>
-                  </div>
+              <div className="summary-stats">
+                <div className="stat-pill">
+                  <span className="stat-label">Distance</span>
+                  <span className="stat-value">{distanceMi} mi</span>
                 </div>
-              ) : (
-                <div className="result-card">
-                  <p className="result-hint">
-                    Select a building from suggestions to get directions.
-                  </p>
+                <div className="stat-pill">
+                  <span className="stat-label">Walking</span>
+                  <span className="stat-value">{durationMin} min</span>
                 </div>
+              </div>
+
+              <div className="directions-map">
+                <MapContainer
+                  center={[fromBuilding.lat, fromBuilding.lng]}
+                  zoom={16}
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={[fromBuilding.lat, fromBuilding.lng]} />
+                  <Marker position={[toBuilding.lat, toBuilding.lng]} />
+                  <Polyline positions={route} pathOptions={{ color: '#4ecda4', weight: 5 }} />
+                  <FitBounds bounds={route} />
+                </MapContainer>
+              </div>
+
+              <div className="result-actions">
+                <button className="action-btn primary" onClick={openInGoogleMaps}>
+                  Open in Google Maps
+                </button>
+                <button className="action-btn ghost" onClick={() => navigate(`/map`)}>
+                  View on campus map
+                </button>
+              </div>
+
+              {summary.steps.length > 0 && (
+                <details className="steps-details">
+                  <summary>Step-by-step ({summary.steps.length})</summary>
+                  <ol className="steps-list">
+                    {summary.steps.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ol>
+                </details>
               )}
             </div>
           </div>
         )}
 
-        {/* Quick popular routes */}
         {!showResult && (
           <div className="popular-routes">
             <h3>Popular routes</h3>
@@ -215,7 +279,7 @@ export default function WalkingDirections() {
 }
 
 const POPULAR = [
-  { from: 'Mesa Court Dining', to: 'Donald Bren Hall' },
+  { from: 'Mesa Court Housing', to: 'Donald Bren Hall' },
   { from: 'Anteater Recreation Center', to: 'Langson Library' },
   { from: 'Student Center', to: 'Rowland Hall' },
   { from: 'Aldrich Park', to: 'Social Science Plaza A' },

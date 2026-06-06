@@ -220,7 +220,7 @@ export default function MapPage() {
                 <button
                   className="panel-btn-ghost"
                   onClick={() => {
-                    const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedBuilding.lat},${selectedBuilding.lng}&destination_place_id=${encodeURIComponent(selectedBuilding.name)}`;
+                    const url = `https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${selectedBuilding.lat},${selectedBuilding.lng}&destination_place_id=${encodeURIComponent(selectedBuilding.name)}`;
                     window.open(url, '_blank', 'noopener,noreferrer');
                   }}
                 >

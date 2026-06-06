@@ -54,7 +54,7 @@ export default function BuildingDetail() {
   }, [isAuthenticated, building]);
 
   const openInGoogleMaps = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${building.lat},${building.lng}&destination_place_id=${encodeURIComponent(building.name)}`;
+    const url = `https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${building.lat},${building.lng}&destination_place_id=${encodeURIComponent(building.name)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
